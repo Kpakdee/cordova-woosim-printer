@@ -1,6 +1,8 @@
 package cordova.woosim.printer;
 
-import org.apache.http.util.ByteArrayBuffer;
+//import org.apache.http.util.ByteArrayBuffer;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -50,15 +52,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         if(D) Log.e(TAG, "+++ ON CREATE +++");
 
-        setContentView(R.layout.activity_main);
-        
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
             if(D) Log.e(TAG, "+++ BLUETOOTH NOT SUPPORTED +++");
-            Toast.makeText(this, R.string.toast_bt_na, Toast.LENGTH_LONG).show();
             finish();
             return;
         } else {
@@ -218,7 +217,6 @@ public class MainActivity extends Activity {
             } else {
                 // User did not enable Bluetooth or an error occurred
                 Log.d(TAG, "BT not enabled");
-                Toast.makeText(this, R.string.bt_not_enabled_leaving, Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
@@ -240,7 +238,6 @@ public class MainActivity extends Activity {
     private void sendData(byte[] data) {
         // Check that we're actually connected before trying printing
         if (mPrintService.getState() != BluetoothPrintService.STATE_CONNECTED) {
-            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
             return;
         }
         
@@ -252,21 +249,20 @@ public class MainActivity extends Activity {
 
     
     public void printText(View v) {
-    	EditText editText = (EditText) findViewById(R.id.edit_text);
-    	String string = editText.getText().toString();
+    	String string = "This is the demo print Text";
     	byte[] text = string.getBytes();
     	if (text.length == 0) return;
-    	
-    	ByteArrayBuffer buffer = new ByteArrayBuffer(1024);
+
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream(1024);
     	
     	byte[] cmd1 = WoosimCmd.setTextStyle(false, false, false, 1, 1);
     	byte[] cmd2 = WoosimCmd.setTextAlign( 1 );
     	byte[] cmd3 = WoosimCmd.printData();
     	
-    	buffer.append(cmd1, 0, cmd1.length);
-    	buffer.append(cmd2, 0, cmd2.length);
-    	buffer.append(text, 0, text.length);
-    	buffer.append(cmd3, 0, cmd3.length);
+    	buffer.write(cmd1, 0, cmd1.length);
+    	buffer.write(cmd2, 0, cmd2.length);
+    	buffer.write(text, 0, text.length);
+    	buffer.write(cmd3, 0, cmd3.length);
     	
     	sendData(WoosimCmd.initPrinter());
     	sendData(buffer.toByteArray());
@@ -277,16 +273,16 @@ public class MainActivity extends Activity {
         byte[] text = text2print.getBytes();
         if (text.length == 0) return;
 
-        ByteArrayBuffer buffer = new ByteArrayBuffer(1024);
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream(1024);
 
         byte[] cmd1 = WoosimCmd.setTextStyle(false, false, false, 1, 1);
         byte[] cmd2 = WoosimCmd.setTextAlign( 1 );
         byte[] cmd3 = WoosimCmd.printData();
 
-        buffer.append(cmd1, 0, cmd1.length);
-        buffer.append(cmd2, 0, cmd2.length);
-        buffer.append(text, 0, text.length);
-        buffer.append(cmd3, 0, cmd3.length);
+        buffer.write(cmd1, 0, cmd1.length);
+        buffer.write(cmd2, 0, cmd2.length);
+        buffer.write(text, 0, text.length);
+        buffer.write(cmd3, 0, cmd3.length);
 
         sendData(WoosimCmd.initPrinter());
         sendData(buffer.toByteArray());

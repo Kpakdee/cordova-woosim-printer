@@ -199,7 +199,6 @@ public class BluetoothPrintService {
         // Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putInt(MainActivity.TOAST, R.string.connect_fail);
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
@@ -217,7 +216,6 @@ public class BluetoothPrintService {
         // Send a failure message back to the Activity
         Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_TOAST);
         Bundle bundle = new Bundle();
-        bundle.putInt(MainActivity.TOAST, R.string.connect_lost);
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
