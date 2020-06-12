@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="nirwan.cordova.plugin.printer"
+        version="0.6.0dev">
+
+    <name>Print with Woosim Printer</name>
+
+    <description>Plugin to print both online/offline </description>
+    <repo>https://github.com/laborc8/cordova-woosim-printer.git</repo>
+    <keywords>print, printer, bluetooth, woosim, android</keywords>
+    <license>Apache 2.0</license>
+
+    <author>Mario MEISENBERGER</author>
+
+    <engines>
+        <engine name="cordova" version=">=3.0.0" />
+    </engines>
+
+    <!-- interface -->
+    <js-module src="www/printer.js" name="Printer">
+        <clobbers target="plugin.printer" />
+    </js-module>
+
+
+    <!-- android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="Printer">
+                <param name="android-package" value="cordova.woosim.printer.Printer"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/BluetoothPrintService.java" target-dir="src/cordova/woosim/printer" />
+        <source-file src="src/android/DeviceListActivity.java" target-dir="src/cordova/woosim/printer" />
+        <source-file src="src/android/MainActivity.java" target-dir="src/cordova/woosim/printer" />
+        <source-file src="src/android/Printer.java" target-dir="src/cordova/woosim/printer" />
+
+    </platform>
+
+</plugin>
