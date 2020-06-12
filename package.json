@@ -1,0 +1,29 @@
+{
+  "name": "cordova-woosim-printer",
+  "version": "1.0.0",
+  "description": "ionic plugin for woosim bluetooth printer",
+  "cordova": {
+    "id": "cordova-woosim-printer",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laborc8/cordova-woosim-printer.git"
+  },
+  "keywords": [
+    "printer",
+    "bluetooth",
+    "woosim",
+    "ionic",
+    "cordova",
+    "plugin"
+  ],
+  "author": "Mario MEISENBERGER",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/laborc8/cordova-woosim-printer/issues"
+  },
+  "homepage": "https://github.com/laborc8/cordova-woosim-printer#readme"
+}
