@@ -132,8 +132,6 @@ public class MainActivity extends Activity {
         if(D) Log.d(TAG, "setupPrint()");
 
         Intent serverIntent = null;
-        serverIntent = new Intent(this, DeviceListActivity.class);
-        startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_SECURE);
 
         // Initialize the BluetoothPrintService to perform bluetooth connections
         mPrintService = new BluetoothPrintService(this, mHandler);
@@ -224,7 +222,7 @@ public class MainActivity extends Activity {
 
     private void connectDevice(Intent data, boolean secure) {
         // Get the device MAC address
-        String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+        String address = data.getExtras().getString("");
         // Get the BLuetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
