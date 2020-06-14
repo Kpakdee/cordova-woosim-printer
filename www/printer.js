@@ -1,8 +1,5 @@
-cordova.define("cordova.woosim.printer.Printer", function(require, exports, module) {
 
-var Printer = function () {
-
-};
+var Printer = function () {};
 
 Printer.prototype = {
     /**
@@ -86,6 +83,5 @@ Printer.prototype = {
 };
 
 var plugin = new Printer();
-
 module.exports = plugin;
-});
+
