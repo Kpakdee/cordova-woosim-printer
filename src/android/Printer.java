@@ -8,7 +8,6 @@ package cordova.woosim.printer;
 //  but basically it works for woosim printer
 //
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
@@ -17,12 +16,7 @@ import java.util.*;
 
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaWebView;
-// import org.apache.http.util.ByteArrayBuffer;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-
-
+import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -125,7 +119,7 @@ public class Printer extends CordovaPlugin {
 
     private int printerModel = 0;           // model PRINTER_RX
     private int printerFontSize = 2;        // font-size: 2
-    private String printerAddress = "";     // printer MAC-Adress
+
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -138,6 +132,12 @@ public class Printer extends CordovaPlugin {
 
         if ("print".equals(action)) {
             print(args, callbackContext);
+
+            return true;
+        }
+
+        if ("printCPCL".equals(action)) {
+            printCPCL(args, callbackContext);
 
             return true;
         }
@@ -174,7 +174,7 @@ public class Printer extends CordovaPlugin {
         PluginResult result;
 
         JSONObject config = args.optJSONObject(0);
-        String directory = "";
+        String filename = "";
         try {
             directory = config.optString( "directory", "");
         } catch (Exception ex) {
@@ -266,12 +266,21 @@ public class Printer extends CordovaPlugin {
         String msg = "";
         PluginResult result;
 
-
+        /*
         JSONObject connectConfig = args.optJSONObject(0);
+        String address = "";
+        try {
+            address = connectConfig.optString("address", "00:15:0E:E2:67:A1");
+        } catch (Exception ex) {
+            address = "00:15:0E:E2:67:A1";
+        }
+        */
 
-        this.printerModel = connectConfig.optInt("model", this.printerModel);
-        this.printerFontSize = connectConfig.optInt("fontsize", this.printerFontSize);
-        this.printerAddress = connectConfig.optString("address", "00:00:00:00:00:00");
+        // se tthe default values
+        this.printerModel = args[0];
+        this.printerFontSize = args[1];
+
+
 
         // try to get the printer
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -303,11 +312,14 @@ public class Printer extends CordovaPlugin {
                 // Start the Bluetooth print services
                 System.out.println(" ++++ PRINT SERVICE START +++");
                 mPrintService.start();
-                System.out.println( "start print service on address: " + this.printerAddress );
-                this.connectWoosimPrinter( this.printerAddress );
+                System.out.println( "start print service on address: " + address );
+                this.connectWoosimPrinter( address );
 
             }
         }
+
+
+
 
         msg = "Device: " + mConnectedDeviceName;
 
@@ -421,7 +433,7 @@ public class Printer extends CordovaPlugin {
 
     private void connectDevice(Intent data, boolean secure) {
         // Get the device MAC address
-        String address = data.getExtras().getString("");
+        String address = data.getExtras().getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
         // Get the BLuetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
@@ -445,6 +457,24 @@ public class Printer extends CordovaPlugin {
             mPrintService.write(data);
     }
 
+
+
+    public void printCPCL( String text2print ) {
+
+
+        byte[] text = text2print.getBytes();
+        if (text.length == 0) return;
+
+        //string receipt = Encoding.ASCII.GetBytes(YourReceiptAsString);
+
+
+        ByteArrayOutputStream myBuffer = new ByteArrayOutputStream(2048);
+        myBuffer.write( text, 0, text.length);
+        sendData(myBuffer.toByteArray());
+
+
+
+    }
 
 
     public void print( String text2print ) {
@@ -475,8 +505,7 @@ public class Printer extends CordovaPlugin {
         PRINTER_TYPE = PRINTER_TYPE;
 
 
-        int PRINTER_ARM = 1;    // orange-
-        int PRINTER_RX = 3;     // grau alle
+
 
         if (PRINTER_TYPE == PRINTER_ARM)
         {
@@ -493,15 +522,15 @@ public class Printer extends CordovaPlugin {
 
 
         byte[] myBText = WoosimCmd.getTTFcode( 2, 1, text2print);
-        ByteArrayOutputStream myBuffer = new ByteArrayOutputStream(2048);
+        ByteArrayBuffer myBuffer = new ByteArrayBuffer(2048);
         byte[] cmd_ct = WoosimCmd.setCodeTable( PRINTER_TYPE, CODE_TABLE, 1);
         byte[] cmd_ts = WoosimCmd.setTextStyle( false, false, false, font_width, 1);
         byte[] cmd_ta = WoosimCmd.setTextAlign( WoosimCmd.ALIGN_LEFT );
-        myBuffer.write( cmd_ct, 0, cmd_ct.length);
-        myBuffer.write( cmd_ts, 0, cmd_ts.length);
-        myBuffer.write( cmd_ta, 0, cmd_ta.length);
+        myBuffer.append( cmd_ct, 0, cmd_ct.length);
+        myBuffer.append( cmd_ts, 0, cmd_ts.length);
+        myBuffer.append( cmd_ta, 0, cmd_ta.length);
         //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-        myBuffer.write( myBText, 0, myBText.length);
+        myBuffer.append( myBText, 0, myBText.length);
         sendData(WoosimCmd.initPrinter());
         sendData(myBuffer.toByteArray());
 
@@ -515,84 +544,84 @@ public class Printer extends CordovaPlugin {
 
             String myText = "1 öäüß \n";
             myBText = WoosimCmd.getTTFcode(2, 1, myText);
-            myBuffer = new ByteArrayOutputStream(4096);
+            myBuffer = new ByteArrayBuffer(4096);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CODE_TABLE_Western_Europe_Latin2, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
             myText = "2 öäüß \n";
             myBText = WoosimCmd.getTTFcode(2, 1, myText);
-            myBuffer = new ByteArrayOutputStream(2048);
+            myBuffer = new ByteArrayBuffer(2048);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CODE_TABLE_Western_Europe_Latin9, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
             myText = "3 öäüß \n";
             myBText = WoosimCmd.getTTFcode(2, 1, myText);
-            myBuffer = new ByteArrayOutputStream(2048);
+            myBuffer = new ByteArrayBuffer(2048);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CT_CP858, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
             myText = "4 öäüß \n";
-            myBuffer = new ByteArrayOutputStream(2048);
+            myBuffer = new ByteArrayBuffer(2048);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CODE_TABLE_Western_Europe_Latin9, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
             myText = "5 öäüß \n";
             myBText = WoosimCmd.getTTFcode(2, 1, myText);
-            myBuffer = new ByteArrayOutputStream(2048);
+            myBuffer = new ByteArrayBuffer(2048);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CT_WIN1250, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
             myText = "6 öäüß \n";
             myBText = WoosimCmd.getTTFcode(2, 1, myText);
-            myBuffer = new ByteArrayOutputStream(2048);
+            myBuffer = new ByteArrayBuffer(2048);
             cmd_ct = WoosimCmd.setCodeTable(PRINTER_TYPE, CT_WIN1252, 1);
             cmd_ts = WoosimCmd.setTextStyle(false, false, false, 2, 1);
             cmd_ta = WoosimCmd.setTextAlign(WoosimCmd.ALIGN_LEFT);
-            myBuffer.write(cmd_ct, 0, cmd_ct.length);
-            myBuffer.write(cmd_ts, 0, cmd_ts.length);
-            myBuffer.write(cmd_ta, 0, cmd_ta.length);
+            myBuffer.append(cmd_ct, 0, cmd_ct.length);
+            myBuffer.append(cmd_ts, 0, cmd_ts.length);
+            myBuffer.append(cmd_ta, 0, cmd_ta.length);
             //myBuffer.append(WoosimCmd.selectTTF("truetype.ttf"), 0, WoosimCmd.selectTTF("truetype.ttf").length);
-            myBuffer.write(myBText, 0, myBText.length);
+            myBuffer.append(myBText, 0, myBText.length);
             sendData(WoosimCmd.initPrinter());
             sendData(myBuffer.toByteArray());
 
